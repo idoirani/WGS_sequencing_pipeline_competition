@@ -37,9 +37,20 @@ def plate_map(xlsx):
 
 
 def group_key(cond):
-    """Stable key for 'the same condition across days', from the lab's own text."""
+    """Stable key for 'the same condition across days', from the lab's own text.
+
+    The +/- and +/+ mixtures must NOT collapse together: stripping punctuation
+    first maps both to the same key and silently pools a lysis-deficient
+    competition with a lysis-competent one.
+    """
     c = cond.lower()
     c = re.sub(r'ci\s*857', '', c)
+    c = re.sub(r'\+\s*/\s*\+', ' pp ', c)
+    c = re.sub(r'\+\s*/\s*-', ' pm ', c)
+    # a trailing sign on 'lysis+' / 'lysis-' is the whole distinction between
+    # the two pure kanR controls; it must survive punctuation stripping too
+    c = re.sub(r'lysis\s*\+', ' lysisplus ', c)
+    c = re.sub(r'lysis\s*-', ' lysisminus ', c)
     c = re.sub(r'\s+', ' ', c.replace('%', ' pct ')).strip()
     return re.sub(r'[^a-z0-9]+', '_', c).strip('_')
 

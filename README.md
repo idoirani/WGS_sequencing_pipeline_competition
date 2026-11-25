@@ -100,9 +100,13 @@ no control for an allele, stage 05 stops rather than reporting biased fractions.
 | `13_parental_catalogue.sh` | sites that differ between the ancestors |
 | `14_variant_scan.sh` | genome-wide joint pileup and call |
 | `15_variant_filter.py` | parental / differential / **repeat** filters, then classify |
+| `16_lesions.py` | gene-wide lesion calling for every gene in `GENES`: five classes, one per read, plus a point-lesion catalogue |
+| `17_concordance.py` | tests each library's genotype against the condition it is labelled with |
+| `18_timeseries.py` | per-condition-group time series across passage days |
+| `20`–`22_fig_*.py` | figures |
 | `30_tables.py` | result CSVs |
 
-## Five things that cost hours if skipped
+## Eight things that cost hours if skipped
 
 1. **Map with `--secondary=no`; count with `-F 0x904 -q 20`.** Otherwise one
    read is credited to two alleles and the fractions stop summing to 1.
@@ -116,7 +120,18 @@ no control for an allele, stage 05 stops rather than reporting biased fractions.
    copy collapse onto the reference copy and manufacture a dense block of
    linked, strictly lineage-correlated false variants — a convincing fake sweep.
    Stage 15 blasts ±450 bp of context and keeps only single-hit sites.
-5. **Sample-specificity outranks homopolymer context** when classifying indels.
+5. **Calibrate cross-assignment per plate row, not pooled.** The measured
+   IIa->wild-type leak ranged 0.055-0.139 between rows of the same experiment.
+   Unmixing every library against its own row's controls tightened allele-budget
+   closure from 0.944-1.091 to 0.963-1.077.
+6. **Key an indel by position, not by its length.** ONT reports one true 25 bp
+   insertion as 24-27 bp; keying on length splits a real convergent lesion into
+   four sub-threshold sites and loses it.
+7. **A point-lesion floor must be absolute, not relative.** A 1 bp deletion
+   sitting at 5.8 % in every control cleared a "floor < half the peak" test and
+   then put 9-43 % false disruption into pure controls. Use a per-kind absolute
+   cap as well.
+8. **Sample-specificity outranks homopolymer context** when classifying indels.
    The ONT indel floor is a low fraction spread over many samples; a real indel
    is high in one and absent from the rest. Reversing that order discards
    genuine frameshifts sitting in mononucleotide runs.

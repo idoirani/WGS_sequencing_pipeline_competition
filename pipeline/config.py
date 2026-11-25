@@ -148,8 +148,11 @@ LYSIS_MINUS   = ('DD7VVC_1_cmS_kanR_CI857_delta_lysis', 'contig_4', 430208, 4317
 
 # ----------------------------------------------------------- 6. host genes
 # Receptor and its activator.  Strand matters for codon numbering in 09.
+# Strand is taken from the strain's own annotation (both are minus here) and
+# drives codon numbering in config.codon().  Getting it wrong silently reports
+# every codon number mirrored about the middle of the gene.
 GENES = {'lamB': {'span': (4324753, 4326093), 'strand': '-', 'codons': 446},
-         'malT': {'span': (327940, 330645),  'strand': '+', 'codons': 901}}
+         'malT': {'span': (327940, 330645),  'strand': '-', 'codons': 901}}
 
 # Tail-fibre locus, where prophage recombination with the Rac cryptic prophage
 # shows up (12).
@@ -163,6 +166,12 @@ MIN_DEL     = 50      # bp: smallest deletion treated as a lesion
 MIN_JX_READS= 2       # reads needed to call an insertion junction
 MIN_DISC    = 400     # bp inside the discriminating interior for locus assignment
 BOOT        = 2000    # bootstrap replicates
+# A pure control must be pure.  Fraction of its reads allowed to land on a
+# DIFFERENT CASSETTE (cross-assignment onto wild-type is handled by the matrix
+# itself and is not counted here).  A control above this is excluded from the
+# confusion matrix and reported -- using a contaminated control as a matrix row
+# biases every unmixed fraction in the run.
+CTRL_MAX_OFF_CASSETTE = 0.10
 MPILEUP_D   = 150     # bcftools mpileup per-file depth cap (unbounded stalls)
 MIN_QUAL    = 30      # variant QUAL floor
 MIN_DP      = 100     # joint-depth floor

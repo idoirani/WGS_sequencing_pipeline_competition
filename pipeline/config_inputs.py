@@ -22,3 +22,18 @@ EXTRA_COL_RE = r'_H(\d+)\.fastq\.gz$'
 
 # A library smaller than this is treated as a failed run (use=0).
 MIN_FASTQ_BYTES = 5_000_000
+
+# Which marker cassettes each CONDITION CLASS is built from.  This is a lab
+# fact, written out so 17_concordance.py tests the data against the protocol
+# rather than against itself.  First matching pattern wins (case-insensitive).
+#   Ia  = aph(3')-Ia  kanR, lysis-competent   (TG5HVC_1)
+#   IIa = aph(3')-IIa kanR, lysis-deficient   (DD7VVC_1)
+#   cat = catA1       cmR,  lysis-competent   (DD7VVC_2)
+CONDITION_MARKERS = [
+    (r'100.*cmr',        ('cat',)),
+    (r'100.*lysis\s*-',  ('IIa',)),
+    (r'100',             ('Ia',)),
+    (r'\+\s*/\s*-',      ('cat', 'IIa')),
+    (r'\+\s*/\s*\+',     ('Ia', 'cat')),
+    (r'double',          ('Ia', 'cat')),
+]

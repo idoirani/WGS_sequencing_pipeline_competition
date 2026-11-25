@@ -70,42 +70,83 @@ for s in S:
             c[k] += 1
     cnt[s] = c
 
-# ---- confusion matrix from every pure control in the sheet ----------------
+# ---- confusion matrix, matched to each library's own plate row ------------
+# Cross-assignment is NOT a constant of the assay: the IIa->wild-type leak
+# measured here ranges 0.055-0.139 between plate rows.  Pooling all controls
+# would push that spread into every mixture as a systematic error, so each
+# library is unmixed with the controls from its OWN rep and day whenever those
+# exist (the plate layout puts the three pure controls in columns 1-3 of every
+# row).  Where a row's control is missing or failed QC, the pooled mean is used
+# and the substitution is reported rather than hidden.
 L = json.load(open(os.path.join(C.OUT, 'locus.json')))
+CASS = ('Ia', 'IIa', 'cat')
+
+ctrl_off = {}
+for s, al in C.PURE_CONTROLS.items():
+    if s in L:
+        a = al.replace('allele_', '')
+        ctrl_off[s] = (a, sum(L[s][v]['f'] for v in CASS if v != a))
+failed = {s for s, (a, off) in ctrl_off.items() if off > C.CTRL_MAX_OFF_CASSETTE}
 
 
-def control_row(allele_key):
-    """Mean observed fractions across all control libraries for this allele."""
-    samples = [s for s in C.CONTROLS_BY_ALLELE.get('allele_' + allele_key, []) if s in L]
-    if not samples:
-        raise SystemExit('no pure control for allele_%s -- add one to the sample sheet'
-                         % allele_key)
-    return {v: st.mean(L[s][v]['f'] for s in samples) for v in C.VARIANTS}, samples
+def _rows(k, key=None):
+    out = []
+    for s in C.CONTROLS_BY_ALLELE.get('allele_' + k, []):
+        if s not in L or s in failed:
+            continue
+        if key is None or (C.REP.get(s), C.DAY.get(s)) == key:
+            out.append(s)
+    return out
 
 
-M, used = {}, {}
-for k in ('Ia', 'IIa', 'cat'):
-    M[k], used[k] = control_row(k)
-det = M['Ia']['Ia'] * M['cat']['cat'] - M['cat']['Ia'] * M['Ia']['cat']
+_cache = {}
 
 
-def unmix(o_Ia, o_IIa, o_cat):
+def matrix_for(sample):
+    key = (C.REP.get(sample), C.DAY.get(sample))
+    if key in _cache:
+        return _cache[key]
+    M, src = {}, {}
+    for k in CASS:
+        local = _rows(k, key)
+        use = local or _rows(k)
+        if not use:
+            raise SystemExit('no usable pure control for allele_%s -- add one to the '
+                             'sample sheet (or check which controls failed QC)' % k)
+        M[k] = {v: st.mean(L[s][v]['f'] for s in use) for v in C.VARIANTS}
+        src[k] = ('matched' if local else 'pooled', use)
+    M['det'] = M['Ia']['Ia'] * M['cat']['cat'] - M['cat']['Ia'] * M['Ia']['cat']
+    _cache[key] = (M, src)
+    return M, src
+
+
+def unmix(M, o_Ia, o_IIa, o_cat):
     p_IIa = o_IIa / M['IIa']['IIa']
-    p_Ia = (M['cat']['cat'] * o_Ia - M['cat']['Ia'] * o_cat) / det
-    p_cat = (M['Ia']['Ia'] * o_cat - M['Ia']['cat'] * o_Ia) / det
+    p_Ia = (M['cat']['cat'] * o_Ia - M['cat']['Ia'] * o_cat) / M['det']
+    p_cat = (M['Ia']['Ia'] * o_cat - M['Ia']['cat'] * o_Ia) / M['det']
     return max(0.0, p_Ia), max(0.0, p_IIa), max(0.0, p_cat)
+
+
+if failed:
+    print('CONTROL QC FAILED (excluded from every confusion matrix):')
+    for s in sorted(failed):
+        a, off = ctrl_off[s]
+        comp = ' '.join('%s=%.3f' % (v, L[s][v]['f']) for v in C.VARIANTS)
+        print('  %-7s declared pure %-4s but %.1f%% of reads carry another cassette  [%s]'
+              % (s, a, 100 * off, comp))
 
 
 out = {}
 for s in S:
+    M, src = matrix_for(s)
     n = L[s]['n']
     pool = [v for v in C.VARIANTS for _ in range(L[s][v]['n'])]
     reps = []
     for _ in range(B):
         r = random.choices(pool, k=n) if n else []
-        reps.append(unmix(r.count('Ia') / n, r.count('IIa') / n, r.count('cat') / n)
+        reps.append(unmix(M, r.count('Ia') / n, r.count('IIa') / n, r.count('cat') / n)
                     if n else (0, 0, 0))
-    pt = unmix(L[s]['Ia']['f'], L[s]['IIa']['f'], L[s]['cat']['f'])
+    pt = unmix(M, L[s]['Ia']['f'], L[s]['IIa']['f'], L[s]['cat']['f'])
     e = {}
     for i, v in enumerate(['p_Ia', 'p_IIa', 'p_cat']):
         bs = sorted(x[i] for x in reps)
@@ -126,8 +167,11 @@ for s in S:
     out[s] = e
 json.dump(out, open(os.path.join(C.OUT, 'final.json'), 'w'), indent=1)
 
-print('confusion matrix rows from controls: ' +
-      ', '.join('%s=%s' % (k, '+'.join(v)) for k, v in used.items()))
+print('\nconfusion matrix per plate row:')
+for key in sorted(_cache, key=lambda k: (str(k[0]), k[1] if k[1] is not None else 0)):
+    M, src = _cache[key]
+    print('  rep %s day %-2s  ' % (key[0], key[1]) +
+          '  '.join('%s:%s(%s)' % (k, src[k][0], '+'.join(src[k][1])) for k in CASS))
 print("sample  n_loc  p_Ia            p_IIa           p_cat           sum    cat:kan            "
       "n_jx  f_lysis+        pred(Ia+cat)")
 for s in S:
