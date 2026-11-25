@@ -1,0 +1,22 @@
+# Data and derived files never belong in the repository.
+work/
+handoff/
+fastq/
+articles/
+*.bam
+*.bam.bai
+*.fastq
+*.fastq.gz
+*.fa
+*.fai
+*.mmi
+*.vcf
+*.vcf.gz
+*.vcf.gz.tbi
+sample_sheet.csv
+sheet_*.csv
+*.png
+*.pdf
+__pycache__/
+*.pyc
+.DS_Store

@@ -1,0 +1,20 @@
+# Exact tool set that produced the published results.  Native arm64 on Apple
+# Silicon; no Rosetta/osx-64 emulation is needed anywhere in this pipeline.
+#   conda env create -f environment.yml && conda activate phage-evo
+name: phage-evo
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - minimap2=2.31          # ONT read alignment
+  - samtools=1.24          # sort/index/region extraction/depth
+  - bcftools=1.24          # joint pileup and variant calling
+  - seqkit=2.13.0          # read statistics; index-free contig extraction
+  - mummer4=4.0.1          # parental assembly comparison (nucmer)
+  - blast=2.17.0           # element identification, uniqueness/repeat checks
+  - biopython=1.88
+  - numpy
+  - scipy
+  - matplotlib
+  - openpyxl               # reads the lab's plate record
