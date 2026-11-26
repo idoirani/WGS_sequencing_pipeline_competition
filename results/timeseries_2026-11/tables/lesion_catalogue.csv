@@ -1,0 +1,5 @@
+gene,position,kind,change,effect,codon,peak_sample,peak_reads,peak_fraction,control_fraction
+lamB,4325297,sub,T,nonsense,266,v2D8,15/63,0.2381,0.0
+lamB,4325750,del,1 bp,frameshift,115,v1H11,81/151,0.5364,0.0078
+lamB,4325797,sub,T,nonsense,99,v1H7,22/175,0.1257,0.0
+malT,329624,ins,25 bp,frameshift,341,v1D9,10/41,0.2439,0.0045

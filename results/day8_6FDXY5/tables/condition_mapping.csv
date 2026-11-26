@@ -1,0 +1,12 @@
+sample,condition,temp_C,partner_genotypes,day8_cmR_over_kanR_rep1,expected_dominant_marker,observed_marker_in_assembly,verdict
+H1,100% 30C kanR CI857 lysis+,30,TG5HVC_1 aph(3')-Ia (pure),4.55e-06,aph(3')-Ia,aph(3')-Ia,concordant
+H2,100% 30C cmR CI857 lysis+,30,DD7VVC_2 catA1 (pure),1.80e+05,catA1,catA1,concordant
+H3,100% 30C kanR CI857 lysis-,30,DD7VVC_1 aph(3')-IIa (pure),0.00e+00,aph(3')-IIa,aph(3')-IIa,concordant
+H4,50/50 30C CI857 +/-,30,DD7VVC_2 catA1 vs DD7VVC_1 aph(3')-IIa,1.91e-01,aph(3')-IIa (kanR 5.2x),catA1,DISCORDANT
+H5,20/80 +/- 30C,30,DD7VVC_2 catA1 vs DD7VVC_1 aph(3')-IIa,6.49e-02,aph(3')-IIa (kanR 15x),aph(3')-IIa,concordant
+H6,double cmR/kanR 30C,30,double lysogen: catA1 + kanR,1.33e+00,catA1 AND kanR,aph(3')-Ia only (indel-degraded),catA1 absent
+H7,50/50 37C CI857 +/+,37,TG5HVC_1 aph(3')-Ia vs DD7VVC_2 catA1,2.50e+01,catA1 (cmR 25x),catA1,concordant
+H8,20/80 +/+ 37C,37,TG5HVC_1 aph(3')-Ia vs DD7VVC_2 catA1,3.00e+00,catA1 (cmR 3x),aph(3')-IIa,DISCORDANT
+H9,50/50 37C CI857 +/-,37,DD7VVC_2 catA1 vs DD7VVC_1 aph(3')-IIa,1.50e+00,catA1 (cmR 1.5x),catA1,concordant
+H10,20/80 +/- 37C,37,DD7VVC_2 catA1 vs DD7VVC_1 aph(3')-IIa,1.42e+00,catA1 (cmR 1.4x),catA1,concordant
+H11,double cmR/kanR 37C,37,double lysogen: catA1 + kanR,5.33e-01,catA1 AND kanR,aph(3')-Ia only,catA1 absent
